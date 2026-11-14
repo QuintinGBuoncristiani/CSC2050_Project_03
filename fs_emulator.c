@@ -158,6 +158,76 @@ while (1) {
         if (!found) {
             printf("Error: directory not found.\n");
         }
+    } else if (strcmp(command, "mkdir") == 0) {
+        if (argument == NULL || extra != NULL) {
+            printf("Usage: mkdir <name>\n");
+            continue;
+        }
+
+        if (strlen(argument) > NAME_SIZE) {
+            printf("Error: name must be at most 32 characters.\n");
+            continue;
+        }
+
+        int duplicate = 0;
+        for (int i = 0; i < MAX_INODES; i++) {
+            if (used[i] &&
+                inodes[i].parent == current &&
+                strncmp(inodes[i].name, argument, NAME_SIZE) == 0) {
+                duplicate = 1;
+                break;
+            }
+        }
+
+        if (duplicate) {
+            printf("Error: that name already exists.\n");
+            continue;
+        }
+
+        int new_inode = -1;
+        for (int i = 1; i < MAX_INODES; i++) {
+            if (!used[i]) {
+                new_inode = i;
+                break;
+            }
+        }
+
+        if (new_inode == -1) {
+            printf("Error: no free inodes.\n");
+            continue;
+        }
+
+        char inode_name[16];
+        snprintf(inode_name, sizeof(inode_name), "%d", new_inode);
+
+        FILE *directory_file = fopen(inode_name, "w");
+        if (directory_file == NULL) {
+            perror("Could not create directory file");
+            continue;
+        }
+
+        int write_failed =
+            fprintf(directory_file, "%d .\n%u ..\n",
+                    new_inode, current) < 0;
+
+        if (fclose(directory_file) != 0) {
+            write_failed = 1;
+        }
+
+        if (write_failed) {
+            fprintf(stderr, "Error writing new directory entries.\n");
+            remove(inode_name);
+            continue;
+        }
+
+        Inode new_entry = {0};
+        new_entry.inode = new_inode;
+        new_entry.parent = current;
+        new_entry.type = 'd';
+        strncpy(new_entry.name, argument, NAME_SIZE);
+
+        inodes[new_inode] = new_entry;
+        used[new_inode] = 1;
     } else {
         printf("Error: unknown command.\n");
     }
