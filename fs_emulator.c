@@ -61,6 +61,11 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "Ignoring invalid inode number: %u\n", entry.inode);
             continue;
         }
+	if (entry.parent >= MAX_INODES) {
+   	 fprintf(stderr, "Ignoring invalid parent inode for inode %u\n",
+            entry.inode);
+   	 continue;
+}
 
         if (entry.type != 'd' && entry.type != 'f') {
             fprintf(stderr, "Ignoring invalid type for inode %u\n", entry.inode);
