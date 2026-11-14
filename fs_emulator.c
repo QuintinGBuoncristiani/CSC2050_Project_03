@@ -27,15 +27,11 @@ int save_inodes(Inode inodes[], int used[]) {
             return 1;
         }
     }
-
     if (fclose(file) != 0) {
         perror("Error closing inodes_list");
         return 1;
     }
 
-    if (save_inodes(inodes, used) != 0) {
-    return 1;
-}
     return 0;
 }
 int main(int argc, char *argv[]) {
@@ -161,6 +157,8 @@ while (1) {
         printf("Error: unknown command.\n");
     }
 }
-
+if (save_inodes(inodes, used) != 0) {
+    return 1;
+}
 return 0;
 }
