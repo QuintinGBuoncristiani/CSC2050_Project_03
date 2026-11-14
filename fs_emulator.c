@@ -228,9 +228,78 @@ while (1) {
 
         inodes[new_inode] = new_entry;
         used[new_inode] = 1;
+    } else if (strcmp(command, "touch") == 0) {
+        if (argument == NULL || extra != NULL) {
+            printf("Usage: touch <name>\n");
+            continue;
+        }
+
+        /* Store no more than the allowed 32 characters. */
+        char name[NAME_SIZE + 1];
+        strncpy(name, argument, NAME_SIZE);
+        name[NAME_SIZE] = '\0';
+
+        int duplicate = 0;
+        for (int i = 0; i < MAX_INODES; i++) {
+            if (used[i] &&
+                inodes[i].parent == current &&
+                strncmp(inodes[i].name, name, NAME_SIZE) == 0) {
+                duplicate = 1;
+                break;
+            }
+        }
+
+        /* Per the assignment, an existing name makes touch do nothing. */
+        if (duplicate) {
+            continue;
+        }
+
+        int new_inode = -1;
+        for (int i = 1; i < MAX_INODES; i++) {
+            if (!used[i]) {
+                new_inode = i;
+                break;
+            }
+        }
+
+        if (new_inode == -1) {
+            printf("Error: no free inodes.\n");
+            continue;
+        }
+
+        char inode_name[16];
+        snprintf(inode_name, sizeof(inode_name), "%d", new_inode);
+
+        FILE *regular_file = fopen(inode_name, "w");
+        if (regular_file == NULL) {
+            perror("Could not create file");
+            continue;
+        }
+
+        if (fputs(name, regular_file) == EOF) {
+            perror("Could not write file name");
+            fclose(regular_file);
+            remove(inode_name);
+            continue;
+        }
+
+        if (fclose(regular_file) != 0) {
+            perror("Could not close file");
+            remove(inode_name);
+            continue;
+        }
+
+        Inode new_entry = {0};
+        new_entry.inode = new_inode;
+        new_entry.parent = current;
+        new_entry.type = 'f';
+        strncpy(new_entry.name, name, NAME_SIZE);
+
+        inodes[new_inode] = new_entry;
+        used[new_inode] = 1;
     } else {
-        printf("Error: unknown command.\n");
-    }
+	    printf("Error: unknown command.\n");
+	}
 }
 if (save_inodes(inodes, used) != 0) {
     return 1;
