@@ -1,3 +1,4 @@
+
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -12,7 +13,31 @@ typedef struct {
     char type;
     char name[NAME_SIZE];
 } Inode;
+int save_inodes(Inode inodes[], int used[]) {
+    FILE *file = fopen("inodes_list", "wb");
+    if (file == NULL) {
+        perror("Could not save inodes_list");
+        return 1;
+    }
 
+    for (int i = 0; i < MAX_INODES; i++) {
+        if (used[i] && fwrite(&inodes[i], sizeof(Inode), 1, file) != 1) {
+            perror("Error writing inodes_list");
+            fclose(file);
+            return 1;
+        }
+    }
+
+    if (fclose(file) != 0) {
+        perror("Error closing inodes_list");
+        return 1;
+    }
+
+    if (save_inodes(inodes, used) != 0) {
+    return 1;
+}
+    return 0;
+}
 int main(int argc, char *argv[]) {
     Inode inodes[MAX_INODES] = {0};
     int used[MAX_INODES] = {0};
