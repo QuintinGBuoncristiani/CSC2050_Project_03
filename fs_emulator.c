@@ -164,16 +164,15 @@ while (1) {
             continue;
         }
 
-        if (strlen(argument) > NAME_SIZE) {
-            printf("Error: name must be at most 32 characters.\n");
-            continue;
-        }
+        char name[NAME_SIZE + 1];
+	strncpy(name, argument, NAME_SIZE);
+	name[NAME_SIZE] = '\0';
 
         int duplicate = 0;
         for (int i = 0; i < MAX_INODES; i++) {
             if (used[i] &&
                 inodes[i].parent == current &&
-                strncmp(inodes[i].name, argument, NAME_SIZE) == 0) {
+                strncmp(inodes[i].name, name, NAME_SIZE) == 0) {
                 duplicate = 1;
                 break;
             }
